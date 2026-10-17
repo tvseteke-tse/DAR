@@ -32,7 +32,7 @@
     
     .tables-wrapper {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         flex: 1;
         overflow: hidden;
     }
@@ -45,21 +45,18 @@
     }
 
     table { width: 100%; border-collapse: collapse; font-family: 'Courier New', Courier, monospace; table-layout: fixed; }
-    th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 3px 1px; font-size: 0.75rem; white-space: nowrap; }
-    td { padding: 3px 1px; text-align: center; border-bottom: 1px solid #002b66; font-size: 0.82rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 4px 2px; font-size: 0.8rem; white-space: nowrap; }
+    td { padding: 4px 2px; text-align: center; border-bottom: 1px solid #002b66; font-size: 0.88rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
-    /* Sorszám oszlop kijavítva, hogy ne vágja le a kétjegyű számokat */
-    .rank-col { width: 34px; color: #ffffff; text-align: center; overflow: visible !important; text-overflow: clip !important; }
-    
-    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 105px; }
-    .team-col { text-align: left; font-family: sans-serif; color: #00ff66; width: 75px; font-size: 0.72rem; }
-    .stat-col { color: #8b949e; font-size: 0.82rem; }
+    .rank-col { width: 36px; color: #ffffff; text-align: center; overflow: visible !important; text-overflow: clip !important; }
+    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 140px; }
+    .stat-col { color: #8b949e; font-size: 0.88rem; }
     
     .color-green { color: #00ff66 !important; text-shadow: 0 0 4px rgba(0, 255, 102, 0.4); }
     .color-yellow { color: #ffff00 !important; text-shadow: 0 0 4px rgba(255, 255, 0, 0.4); }
     .color-red { color: #ff3333 !important; text-shadow: 0 0 4px rgba(255, 51, 51, 0.4); }
 
-    .total-col { font-weight: bold; font-size: 0.92rem; }
+    .total-col { font-weight: bold; font-size: 0.98rem; }
     tr.top3 { background-color: rgba(0, 68, 170, 0.4); }
     tr.top3 .rank-col { color: #ffff00; }
 </style>
@@ -72,175 +69,4 @@
 <div class="board-container">
     <div class="category-tabs" id="tabsContainer"></div>
 
-    <h1 id="boardTitle">Dél-Alföldi Amatőr Egyéni Tekeranglista Verseny.</h1>
-    
-    <div class="tables-wrapper">
-        <!-- Bal oldali oszlop -->
-        <div class="table-column">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="rank-col">#</th>
-                        <th class="name-col">Név</th>
-                        <th class="team-col">Csapat</th>
-                        <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                        <th>Teli</th>
-                        <th>Tarol</th>
-                        <th>Üres</th>
-                        <th class="total-col">Össz.</th>
-                    </tr>
-                </thead>
-                <tbody id="boardBody1"></tbody>
-            </table>
-        </div>
-
-        <!-- Jobb oldali oszlop -->
-        <div class="table-column">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="rank-col">#</th>
-                        <th class="name-col">Név</th>
-                        <th class="team-col">Csapat</th>
-                        <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                        <th>Teli</th>
-                        <th>Tarol</th>
-                        <th>Üres</th>
-                        <th class="total-col">Össz.</th>
-                    </tr>
-                </thead>
-                <tbody id="boardBody2"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
-const firebaseConfig = {
-    apiKey: "aizasyd8o7xyctxtjlqcm8z-29xtbopbxrybjom",
-    authDomain: "teke-eredmenyek.firebaseapp.com",
-    databaseURL: "https://teke-eredmenyek-default-rtdb.firebaseio.com",
-    projectId: "teke-eredmenyek",
-    storageBucket: "teke-eredmenyek.appspot.com"
-};
-
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-let activeCatId = '';
-let categories = [];
-let categoriesData = {};
-
-db.ref('karikupa_egyeni').on('value', (snapshot) => {
-    const val = snapshot.val();
-    if (val) {
-        categories = val.categories || [];
-        categoriesData = val.data || {};
-
-        if (categories.length > 0) {
-            if (!activeCatId || !categories.find(c => c.id === activeCatId)) {
-                activeCatId = categories[0].id;
-            }
-        }
-        renderCategoryTabs();
-        renderCurrentCategory();
-    }
-});
-
-function renderCategoryTabs() {
-    const container = document.getElementById('tabsContainer');
-    container.innerHTML = '';
-    categories.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = `cat-tab ${cat.id === activeCatId ? 'active' : ''}`;
-        btn.innerText = cat.name;
-        btn.onclick = () => switchCategory(cat.id);
-        container.appendChild(btn);
-    });
-}
-
-function switchCategory(catId) {
-    activeCatId = catId;
-    renderCategoryTabs();
-    renderCurrentCategory();
-}
-
-function getSetColorClass(val) {
-    if (val === 0) return '';
-    if (val > 150) return 'color-green';
-    if (val < 120) return 'color-red';
-    return 'color-yellow';
-}
-
-function getTotalColorClass(val) {
-    if (val === 0) return '';
-    if (val > 600) return 'color-green';
-    if (val < 500) return 'color-red';
-    return 'color-yellow';
-}
-
-function getUresColorClass(val) {
-    if (val === 0) return 'color-green';
-    if (val <= 5) return 'color-yellow';
-    return 'color-red';
-}
-
-function createPlayerRow(player, currentRank) {
-    const tr = document.createElement('tr');
-    if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
-
-    const setsHTML = (player.sets || [0,0,0,0]).map(s => s === 0 ? `<td>-</td>` : `<td class="${getSetColorClass(s)}">${s}</td>`).join('');
-
-    tr.innerHTML = `
-        <td class="rank-col">${currentRank}.</td>
-        <td class="name-col">${player.name || '-'}</td>
-        <td class="team-col">${player.team || '-'}</td>
-        ${setsHTML}
-        <td class="stat-col">${player.teli || 0}</td>
-        <td class="stat-col">${player.tarol || 0}</td>
-        <td class="stat-col ${getUresColorClass(player.ures)}">${player.ures || 0}</td>
-        <td class="total-col ${getTotalColorClass(player.total)}">${player.total || 0}</td>
-    `;
-    return tr;
-}
-
-function renderCurrentCategory() {
-    const cat = categoriesData[activeCatId] || { title: 'KARÁCSONY KUPA 2027.', players: [] };
-    document.getElementById('boardTitle').innerText = (cat.title || 'KARÁCSONY KUPA 2027.').toUpperCase();
-
-    const players = cat.players || [];
-    const sorted = [...players].sort((a, b) => {
-        if (b.total !== a.total) return b.total - a.total;
-        if (b.tarol !== a.tarol) return b.tarol - a.tarol;
-        if (a.ures !== b.ures) return a.ures - b.ures;
-        return 0;
-    });
-
-    const body1 = document.getElementById('boardBody1');
-    const body2 = document.getElementById('boardBody2');
-    body1.innerHTML = '';
-    body2.innerHTML = '';
-
-    const midIndex = Math.ceil(sorted.length / 2);
-    let currentRank = 1;
-
-    sorted.forEach((player, index) => {
-        if (index > 0) {
-            const prev = sorted[index - 1];
-            if (player.total !== prev.total || player.tarol !== prev.tarol || player.ures !== prev.ures) {
-                currentRank = index + 1;
-            }
-        }
-
-        const row = createPlayerRow(player, currentRank);
-
-        if (index < midIndex) {
-            body1.appendChild(row);
-        } else {
-            body2.appendChild(row);
-        }
-    });
-}
-</script>
-</body>
-</html>
+    <h1 id="boardTitle">Dél-Alföldi Amatőr Egyéni Tekeranglista Verseny.
