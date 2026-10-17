@@ -46,18 +46,20 @@
 
     table { width: 100%; border-collapse: collapse; font-family: 'Courier New', Courier, monospace; table-layout: fixed; }
     th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 3px 1px; font-size: 0.75rem; white-space: nowrap; }
-    td { padding: 3px 1px; text-align: center; border-bottom: 1px solid #002b66; font-size: 0.85rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    td { padding: 3px 1px; text-align: center; border-bottom: 1px solid #002b66; font-size: 0.82rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
-    .rank-col { width: 26px; color: #ffffff; text-align: center; }
-    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 110px; }
-    .team-col { text-align: left; font-family: sans-serif; color: #00ff66; width: 85px; font-size: 0.75rem; }
-    .stat-col { color: #8b949e; font-size: 0.85rem; }
+    /* Sorszám oszlop kijavítva, hogy ne vágja le a kétjegyű számokat */
+    .rank-col { width: 34px; color: #ffffff; text-align: center; overflow: visible !important; text-overflow: clip !important; }
+    
+    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 105px; }
+    .team-col { text-align: left; font-family: sans-serif; color: #00ff66; width: 75px; font-size: 0.72rem; }
+    .stat-col { color: #8b949e; font-size: 0.82rem; }
     
     .color-green { color: #00ff66 !important; text-shadow: 0 0 4px rgba(0, 255, 102, 0.4); }
     .color-yellow { color: #ffff00 !important; text-shadow: 0 0 4px rgba(255, 255, 0, 0.4); }
     .color-red { color: #ff3333 !important; text-shadow: 0 0 4px rgba(255, 51, 51, 0.4); }
 
-    .total-col { font-weight: bold; font-size: 0.95rem; }
+    .total-col { font-weight: bold; font-size: 0.92rem; }
     tr.top3 { background-color: rgba(0, 68, 170, 0.4); }
     tr.top3 .rank-col { color: #ffff00; }
 </style>
