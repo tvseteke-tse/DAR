@@ -40,9 +40,10 @@
 
     h1 { text-align: center; margin: 0 0 15px 0; font-size: 2.2rem; color: #ffff00; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(255, 255, 0, 0.4); flex-shrink: 0; }
     
+    /* 3 oszlopos elrendezés */
     .tables-wrapper {
         display: flex;
-        gap: 25px;
+        gap: 20px;
         width: 100%;
         flex: 1;
         min-height: 0;
@@ -59,25 +60,20 @@
     }
 
     table { width: 100%; border-collapse: collapse; font-family: 'Courier New', Courier, monospace; table-layout: fixed; }
-    th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 8px 4px; font-size: 1.1rem; white-space: nowrap; }
+    th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 9px 4px; font-size: 1.1rem; white-space: nowrap; }
+    td { padding: 9px 4px; text-align: center; border-bottom: 1px solid #002b66; font-size: 1.15rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
-    /* Az alábbi osztályok dinamikusan változnak a játékosok számától függően */
-    .row-normal td { padding: 9px 4px; font-size: 1.15rem; }
-    .row-medium td { padding: 5px 4px; font-size: 1rem; }
-    .row-compact td { padding: 3px 4px; font-size: 0.85rem; }
-    
-    td { text-align: center; border-bottom: 1px solid #002b66; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    
-    .rank-col { width: 55px; color: #ffffff; text-align: center; overflow: visible !important; text-overflow: clip !important; }
-    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 320px; }
+    .rank-col { width: 50px; color: #ffffff; text-align: center; overflow: visible !important; text-overflow: clip !important; }
+    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 220px; }
+    .stat-col { color: #8b949e; font-size: 1.15rem; }
     
     .color-green { color: #00ff66 !important; text-shadow: 0 0 5px rgba(0, 255, 102, 0.4); }
     .color-yellow { color: #ffff00 !important; text-shadow: 0 0 5px rgba(255, 255, 0, 0.4); }
     .color-red { color: #ff3333 !important; text-shadow: 0 0 5px rgba(255, 51, 51, 0.4); }
 
-    .total-col { font-weight: bold; }
+    .total-col { font-weight: bold; font-size: 1.3rem; }
     tr.top3 { background-color: rgba(0, 68, 170, 0.4); }
-    tr.top3 .rank-col { color: #ffff00; }
+    tr.top3 .rank-col { color: #ffff00; font-size: 1.25rem; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -91,39 +87,54 @@
     <h1 id="boardTitle">Dél-Alföldi Amatőr Egyéni Tekeranglista Verseny.</h1>
     
     <div class="tables-wrapper">
-        <!-- Bal oldali oszlop -->
+        <!-- 1. Oszlop -->
         <div class="table-column">
             <table>
                 <thead>
                     <tr>
                         <th class="rank-col">#</th>
                         <th class="name-col">Név</th>
-                        <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
                         <th>Teli</th>
                         <th>Tarol</th>
                         <th>Üres</th>
                         <th class="total-col">Össz.</th>
                     </tr>
                 </thead>
-                <tbody id="boardBody1" class="row-normal"></tbody>
+                <tbody id="boardBody1"></tbody>
             </table>
         </div>
 
-        <!-- Jobb oldali oszlop -->
+        <!-- 2. Oszlop -->
         <div class="table-column">
             <table>
                 <thead>
                     <tr>
                         <th class="rank-col">#</th>
                         <th class="name-col">Név</th>
-                        <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
                         <th>Teli</th>
                         <th>Tarol</th>
                         <th>Üres</th>
                         <th class="total-col">Össz.</th>
                     </tr>
                 </thead>
-                <tbody id="boardBody2" class="row-normal"></tbody>
+                <tbody id="boardBody2"></tbody>
+            </table>
+        </div>
+
+        <!-- 3. Oszlop -->
+        <div class="table-column">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="rank-col">#</th>
+                        <th class="name-col">Név</th>
+                        <th>Teli</th>
+                        <th>Tarol</th>
+                        <th>Üres</th>
+                        <th class="total-col">Össz.</th>
+                    </tr>
+                </thead>
+                <tbody id="boardBody3"></tbody>
             </table>
         </div>
     </div>
@@ -165,11 +176,12 @@ function renderCategoryTabs() {
     const container = document.getElementById('tabsContainer');
     container.innerHTML = '';
     categories.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = `cat-tab ${cat.id === activeCatId ? 'active' : ''}`;
-        btn.innerText = cat.name;
-        btn.onclick = () => switchCategory(cat.id);
-        container.appendChild(btn);
+        const btn = document.button ? document.button() : document.createElement('button'); // biztonsági check helyett document.createElement
+        const btnEl = document.createElement('button');
+        btnEl.className = `cat-tab ${cat.id === activeCatId ? 'active' : ''}`;
+        btnEl.innerText = cat.name;
+        btnEl.onclick = () => switchCategory(cat.id);
+        container.appendChild(btnEl);
     });
 }
 
@@ -177,13 +189,6 @@ function switchCategory(catId) {
     activeCatId = catId;
     renderCategoryTabs();
     renderCurrentCategory();
-}
-
-function getSetColorClass(val) {
-    if (val === 0) return '';
-    if (val > 150) return 'color-green';
-    if (val < 120) return 'color-red';
-    return 'color-yellow';
 }
 
 function getTotalColorClass(val) {
@@ -203,12 +208,9 @@ function createPlayerRow(player, currentRank) {
     const tr = document.createElement('tr');
     if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
 
-    const setsHTML = (player.sets || [0,0,0,0]).map(s => s === 0 ? `<td>-</td>` : `<td class="${getSetColorClass(s)}">${s}</td>`).join('');
-
     tr.innerHTML = `
         <td class="rank-col">${currentRank}.</td>
         <td class="name-col">${player.name || '-'}</td>
-        ${setsHTML}
         <td class="stat-col">${player.teli || 0}</td>
         <td class="stat-col">${player.tarol || 0}</td>
         <td class="stat-col ${getUresColorClass(player.ures)}">${player.ures || 0}</td>
@@ -231,25 +233,15 @@ function renderCurrentCategory() {
 
     const body1 = document.getElementById('boardBody1');
     const body2 = document.getElementById('boardBody2');
+    const body3 = document.getElementById('boardBody3');
     body1.innerHTML = '';
     body2.innerHTML = '';
+    body3.innerHTML = '';
 
-    // Meghatározzuk, hány sor lesz egy oszlopban
-    const midIndex = Math.ceil(sorted.length / 2);
-    
-    // Dinamikus sorméret beállítása a játékosok száma alapján, hogy semmi ne lógjon le
-    body1.className = '';
-    body2.className = '';
-    if (midIndex > 20) {
-        body1.className = 'row-compact';
-        body2.className = 'row-compact';
-    } else if (midIndex > 15) {
-        body1.className = 'row-medium';
-        body2.className = 'row-medium';
-    } else {
-        body1.className = 'row-normal';
-        body2.className = 'row-normal';
-    }
+    // Elosztjuk a játékosokat 3 egyenlő részre
+    const totalPlayers = sorted.length;
+    const third = Math.ceil(totalPlayers / 3);
+    const secondThird = third * 2;
 
     let currentRank = 1;
 
@@ -263,10 +255,12 @@ function renderCurrentCategory() {
 
         const row = createPlayerRow(player, currentRank);
 
-        if (index < midIndex) {
+        if (index < third) {
             body1.appendChild(row);
-        } else {
+        } else if (index < secondThird) {
             body2.appendChild(row);
+        } else {
+            body3.appendChild(row);
         }
     });
 }
