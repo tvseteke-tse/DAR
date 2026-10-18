@@ -157,7 +157,7 @@ function addNewCategory() {
     activeCatId = newId;
     renderCategoryTabs();
     loadCategoryUI();
-    addPlayerCardUI(0, {});
+    addPlayerCardUI(1, {});
     sendData();
 }
 
@@ -192,24 +192,29 @@ function loadCategoryUI() {
     document.getElementById('tournamentTitle').value = cat.title || '';
 
     if (!cat.players || cat.players.length === 0) {
-        addPlayerCardUI(0, {});
+        addPlayerCardUI(1, {});
     } else {
-        cat.players.forEach((p, idx) => addPlayerCardUI(idx, p));
+        // Betöltéskor a játékosokat az ID-juk alapján növekvő sorrendbe rendezzük, 
+        // de az újonnan hozzáadottak miatt a legnagyobbat tesszük felülre, vagy visszaállítjuk az eredeti sorrendet.
+        // Itt a mentett listát iteráljuk át, és a kártyákhoz beállítjuk a saját fix sorszámukat (p.id).
+        cat.players.forEach(p => {
+            addPlayerCardUI(p.id, p);
+        });
     }
 }
 
-function addPlayerCardUI(index, data = {}) {
+function addPlayerCardUI(playerNumber, data = {}) {
     const container = document.getElementById('playersContainer');
     const card = document.createElement('div');
     card.className = 'card';
-    card.id = `player-card-${index}`;
+    card.dataset.playerNumber = playerNumber; // Eltároljuk a fix sorszámot a DOM-ban
     
     const teli = data.teli_arr || [0,0,0,0];
     const tarol = data.tarol_arr || [0,0,0,0];
     const ures = data.ures_arr || [0,0,0,0];
 
     card.innerHTML = `
-        <div class="card-header"><span>#${index + 1} Játékos</span></div>
+        <div class="card-header"><span>#${playerNumber} Játékos</span></div>
         <div class="row">
             <input type="text" class="p-name" placeholder="Játékos neve" value="${data.name || ''}" oninput="sendData()">
             <input type="text" class="p-team" placeholder="Csapat / Egyesület" value="${data.team || ''}" oninput="sendData()">
@@ -226,7 +231,7 @@ function addPlayerCardUI(index, data = {}) {
         </div>
     `;
     
-    // Itt módosult: ha már van elem a konténerben, az elejére szúrja be, különben simán hozzáfűzi
+    // Az új játékos kártya mindig a lista tetejére kerül be (insertBefore)
     if (container.firstChild) {
         container.insertBefore(card, container.firstChild);
     } else {
@@ -238,42 +243,30 @@ function addPlayer() {
     const cards = document.querySelectorAll('.card');
     if (cards.length >= 200) { alert("Elérted a maximum 200 főt!"); return; }
     
-    // Új üres kártya létrehozása (idmennyiség alapján kap egyedi indexet)
-    addPlayerCardUI(cards.length, {});
+    // Kiszámoljuk a következő legmagasabb sorszámot az eddigi kártyák száma alapján + 1
+    const nextNumber = cards.length + 1;
     
-    // Frissítjük a kártyák fejléceiben a sorszámokat (mivel a lista tetejére került)
-    updateCardHeaders();
+    addPlayerCardUI(nextNumber, {});
     sendData();
 }
 
 function removeLastPlayer() {
     const container = document.getElementById('playersContainer');
     if (container.children.length <= 1) { alert("Legalább 1 játékosnak maradnia kell!"); return; }
+    
+    // Mivel a legújabb a tetején van, a "legutolsó" játékos a DOM szerinti legalsó kártya lesz
     container.removeChild(container.lastChild);
-    updateCardHeaders();
     sendData();
 }
 
-// Segédfüggvény a kártyák sorszámozásának helyes frissítésére a DOM-ban
-function updateCardHeaders() {
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card, idx) => {
-        const headerSpan = card.querySelector('.card-header span');
-        if (headerSpan) {
-            headerSpan.innerText = `#${idx + 1} Játékos`;
-        }
-    });
-}
-
 function sendData() {
-    // Frissítjük a vizuális sorszámokat mentés előtt is, hogy stimmeljen minden
-    updateCardHeaders();
-
     const title = document.getElementById('tournamentTitle').value;
     const players = [];
     const cards = document.querySelectorAll('.card');
 
-    cards.forEach((card, idx) => {
+    cards.forEach((card) => {
+        // A kártyához rögzített fix sorszámot olvassuk ki
+        const playerNumber = parseInt(card.dataset.playerNumber) || 1;
         const name = card.querySelector('.p-name').value;
         const team = card.querySelector('.p-team').value;
         let totalTeli = 0, totalTarol = 0, totalUres = 0;
@@ -291,12 +284,16 @@ function sendData() {
         }
 
         players.push({
-            id: idx + 1, name: name || `Játékos ${idx + 1}`, team: team || '-',
+            id: playerNumber, name: name || `Játékos ${playerNumber}`, team: team || '-',
             sets: sets, teli: totalTeli, tarol: totalTarol, ures: totalUres,
             total: totalTeli + totalTarol,
             teli_arr: teli_arr, tarol_arr: tarol_arr, ures_arr: ures_arr
         });
     });
+
+    // Az adatokat sorszám szerint növekvő sorrendbe rendezzük mentés előtt, 
+    // hogy a külső nézetben/adatbázisban szépen sorban legyenek (1, 2, 3...)
+    players.sort((a, b) => a.id - b.id);
 
     const currentCatObj = categories.find(c => c.id === activeCatId);
     if (currentCatObj && title) {
