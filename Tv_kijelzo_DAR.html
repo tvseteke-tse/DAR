@@ -54,23 +54,30 @@
         height: 100%;
         min-height: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 
     table { width: 100%; border-collapse: collapse; font-family: 'Courier New', Courier, monospace; table-layout: fixed; }
-    th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 10px 6px; font-size: 1.1rem; white-space: nowrap; }
-    td { padding: 9px 6px; text-align: center; border-bottom: 1px solid #002b66; font-size: 1.15rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 8px 4px; font-size: 1.1rem; white-space: nowrap; }
+    
+    /* Az alábbi osztályok dinamikusan változnak a játékosok számától függően */
+    .row-normal td { padding: 9px 4px; font-size: 1.15rem; }
+    .row-medium td { padding: 5px 4px; font-size: 1rem; }
+    .row-compact td { padding: 3px 4px; font-size: 0.85rem; }
+    
+    td { text-align: center; border-bottom: 1px solid #002b66; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     .rank-col { width: 55px; color: #ffffff; text-align: center; overflow: visible !important; text-overflow: clip !important; }
     .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 320px; }
-    .stat-col { color: #8b949e; font-size: 1.15rem; }
     
     .color-green { color: #00ff66 !important; text-shadow: 0 0 5px rgba(0, 255, 102, 0.4); }
     .color-yellow { color: #ffff00 !important; text-shadow: 0 0 5px rgba(255, 255, 0, 0.4); }
     .color-red { color: #ff3333 !important; text-shadow: 0 0 5px rgba(255, 51, 51, 0.4); }
 
-    .total-col { font-weight: bold; font-size: 1.3rem; }
+    .total-col { font-weight: bold; }
     tr.top3 { background-color: rgba(0, 68, 170, 0.4); }
-    tr.top3 .rank-col { color: #ffff00; font-size: 1.25rem; }
+    tr.top3 .rank-col { color: #ffff00; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -98,7 +105,7 @@
                         <th class="total-col">Össz.</th>
                     </tr>
                 </thead>
-                <tbody id="boardBody1"></tbody>
+                <tbody id="boardBody1" class="row-normal"></tbody>
             </table>
         </div>
 
@@ -116,7 +123,7 @@
                         <th class="total-col">Össz.</th>
                     </tr>
                 </thead>
-                <tbody id="boardBody2"></tbody>
+                <tbody id="boardBody2" class="row-normal"></tbody>
             </table>
         </div>
     </div>
@@ -227,7 +234,23 @@ function renderCurrentCategory() {
     body1.innerHTML = '';
     body2.innerHTML = '';
 
+    // Meghatározzuk, hány sor lesz egy oszlopban
     const midIndex = Math.ceil(sorted.length / 2);
+    
+    // Dinamikus sorméret beállítása a játékosok száma alapján, hogy semmi ne lógjon le
+    body1.className = '';
+    body2.className = '';
+    if (midIndex > 20) {
+        body1.className = 'row-compact';
+        body2.className = 'row-compact';
+    } else if (midIndex > 15) {
+        body1.className = 'row-medium';
+        body2.className = 'row-medium';
+    } else {
+        body1.className = 'row-normal';
+        body2.className = 'row-normal';
+    }
+
     let currentRank = 1;
 
     sorted.forEach((player, index) => {
