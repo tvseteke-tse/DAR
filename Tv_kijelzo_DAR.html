@@ -40,7 +40,7 @@
 
     h1 { text-align: center; margin: 0 0 15px 0; font-size: 2.2rem; color: #ffff00; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(255, 255, 0, 0.4); flex-shrink: 0; }
     
-    /* 3 oszlopos elrendezés */
+    /* Oszlopok elrendezése */
     .tables-wrapper {
         display: flex;
         gap: 20px;
@@ -86,57 +86,8 @@
 
     <h1 id="boardTitle">Dél-Alföldi Amatőr Egyéni Tekeranglista Verseny.</h1>
     
-    <div class="tables-wrapper">
-        <!-- 1. Oszlop -->
-        <div class="table-column">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="rank-col">#</th>
-                        <th class="name-col">Név</th>
-                        <th>Teli</th>
-                        <th>Tarol</th>
-                        <th>Üres</th>
-                        <th class="total-col">Össz.</th>
-                    </tr>
-                </thead>
-                <tbody id="boardBody1"></tbody>
-            </table>
-        </div>
-
-        <!-- 2. Oszlop -->
-        <div class="table-column">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="rank-col">#</th>
-                        <th class="name-col">Név</th>
-                        <th>Teli</th>
-                        <th>Tarol</th>
-                        <th>Üres</th>
-                        <th class="total-col">Össz.</th>
-                    </tr>
-                </thead>
-                <tbody id="boardBody2"></tbody>
-            </table>
-        </div>
-
-        <!-- 3. Oszlop -->
-        <div class="table-column">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="rank-col">#</th>
-                        <th class="name-col">Név</th>
-                        <th>Teli</th>
-                        <th>Tarol</th>
-                        <th>Üres</th>
-                        <th class="total-col">Össz.</th>
-                    </tr>
-                </thead>
-                <tbody id="boardBody3"></tbody>
-            </table>
-        </div>
+    <div class="tables-wrapper" id="tablesWrapper">
+        <!-- Az oszlopok dinamikusan generálódnak JS-ből -->
     </div>
 </div>
 
@@ -176,7 +127,6 @@ function renderCategoryTabs() {
     const container = document.getElementById('tabsContainer');
     container.innerHTML = '';
     categories.forEach(cat => {
-        const btn = document.button ? document.button() : document.createElement('button'); // biztonsági check helyett document.createElement
         const btnEl = document.createElement('button');
         btnEl.className = `cat-tab ${cat.id === activeCatId ? 'active' : ''}`;
         btnEl.innerText = cat.name;
@@ -220,8 +170,41 @@ function createPlayerRow(player, currentRank) {
 }
 
 function renderCurrentCategory() {
+    const activeCategoryObj = categories.find(c => c.id === activeCatId);
+    const catName = activeCategoryObj ? activeCategoryObj.name.toLowerCase() : '';
+    
+    // Ha a kategória nevében benne van a "női" kifejezés, 2 oszlopot használunk, egyébként 3-at
+    const numColumns = catName.includes('női') || catName.includes('noi') ? 2 : 3;
+
     const cat = categoriesData[activeCatId] || { title: 'KARÁCSONY KUPA 2027.', players: [] };
     document.getElementById('boardTitle').innerText = (cat.title || 'KARÁCSONY KUPA 2027.').toUpperCase();
+
+    const wrapper = document.getElementById('tablesWrapper');
+    wrapper.innerHTML = '';
+
+    // Létrehozzuk a szükséges számú (2 vagy 3) oszlopot dinamikusan
+    const tbodyElements = [];
+    for (let i = 0; i < numColumns; i++) {
+        const colDiv = document.createElement('div');
+        colDiv.className = 'table-column';
+        colDiv.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th class="rank-col">#</th>
+                        <th class="name-col">Név</th>
+                        <th>Teli</th>
+                        <th>Tarol</th>
+                        <th>Üres</th>
+                        <th class="total-col">Össz.</th>
+                    </tr>
+                </thead>
+                <tbody id="boardBody${i}"></tbody>
+            </table>
+        `;
+        wrapper.appendChild(colDiv);
+        tbodyElements.push(colDiv.querySelector('tbody'));
+    }
 
     const players = cat.players || [];
     const sorted = [...players].sort((a, b) => {
@@ -231,17 +214,8 @@ function renderCurrentCategory() {
         return 0;
     });
 
-    const body1 = document.getElementById('boardBody1');
-    const body2 = document.getElementById('boardBody2');
-    const body3 = document.getElementById('boardBody3');
-    body1.innerHTML = '';
-    body2.innerHTML = '';
-    body3.innerHTML = '';
-
-    // Elosztjuk a játékosokat 3 egyenlő részre
     const totalPlayers = sorted.length;
-    const third = Math.ceil(totalPlayers / 3);
-    const secondThird = third * 2;
+    const itemsPerColumn = Math.ceil(totalPlayers / numColumns);
 
     let currentRank = 1;
 
@@ -254,14 +228,12 @@ function renderCurrentCategory() {
         }
 
         const row = createPlayerRow(player, currentRank);
+        
+        // Kiszámoljuk, melyik oszlopba kerüljön a játékos
+        let colIndex = Math.floor(index / itemsPerColumn);
+        if (colIndex >= numColumns) colIndex = numColumns - 1;
 
-        if (index < third) {
-            body1.appendChild(row);
-        } else if (index < secondThird) {
-            body2.appendChild(row);
-        } else {
-            body3.appendChild(row);
-        }
+        tbodyElements[colIndex].appendChild(row);
     });
 }
 </script>
