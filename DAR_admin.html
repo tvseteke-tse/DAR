@@ -33,7 +33,15 @@
 
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; }
     .card { background: #1e1e1e; padding: 10px; border-radius: 6px; border: 1px solid #333; }
-    .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #8b949e; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; color: #8b949e; }
+    
+    /* Kuka gomb stílusa */
+    .btn-delete-card {
+        background: transparent; border: none; color: #da3633; cursor: pointer; font-size: 1rem;
+        padding: 2px 6px; border-radius: 4px; transition: background 0.2s;
+    }
+    .btn-delete-card:hover { background: rgba(218, 54, 51, 0.2); color: #f85149; }
+
     .row { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
     input[type="text"].p-name { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px; border-radius: 4px; font-weight: bold; }
     input[type="text"].p-team { flex: 1; background: #2a2a2a; border: 1px solid #444; color: #3fb950; padding: 6px; border-radius: 4px; }
@@ -162,156 +170,3 @@ function addNewCategory() {
 }
 
 function removeCurrentCategory() {
-    if (categories.length <= 1) {
-        alert("Legalább egy kategóriának maradnia kell!");
-        return;
-    }
-    if (!confirm("Biztosan törölni szeretnéd ezt a kategóriát a hozzá tartozó adatokkal együtt?")) return;
-
-    categories = categories.filter(c => c.id !== activeCatId);
-    delete categoriesData[activeCatId];
-    activeCatId = categories[0].id;
-
-    renderCategoryTabs();
-    loadCategoryUI();
-    sendData();
-}
-
-function switchCategory(catId) {
-    activeCatId = catId;
-    renderCategoryTabs();
-    loadCategoryUI();
-    saveToLocalStorage();
-}
-
-function loadCategoryUI() {
-    const container = document.getElementById('playersContainer');
-    container.innerHTML = '';
-    
-    const cat = categoriesData[activeCatId] || { title: '', players: [] };
-    document.getElementById('tournamentTitle').value = cat.title || '';
-
-    if (!cat.players || cat.players.length === 0) {
-        addPlayerCardUI(1, {});
-    } else {
-        // Betöltéskor a játékosokat az ID-juk alapján növekvő sorrendbe rendezzük, 
-        // de az újonnan hozzáadottak miatt a legnagyobbat tesszük felülre, vagy visszaállítjuk az eredeti sorrendet.
-        // Itt a mentett listát iteráljuk át, és a kártyákhoz beállítjuk a saját fix sorszámukat (p.id).
-        cat.players.forEach(p => {
-            addPlayerCardUI(p.id, p);
-        });
-    }
-}
-
-function addPlayerCardUI(playerNumber, data = {}) {
-    const container = document.getElementById('playersContainer');
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.dataset.playerNumber = playerNumber; // Eltároljuk a fix sorszámot a DOM-ban
-    
-    const teli = data.teli_arr || [0,0,0,0];
-    const tarol = data.tarol_arr || [0,0,0,0];
-    const ures = data.ures_arr || [0,0,0,0];
-
-    card.innerHTML = `
-        <div class="card-header"><span>#${playerNumber} Játékos</span></div>
-        <div class="row">
-            <input type="text" class="p-name" placeholder="Játékos neve" value="${data.name || ''}" oninput="sendData()">
-            <input type="text" class="p-team" placeholder="Csapat / Egyesület" value="${data.team || ''}" oninput="sendData()">
-        </div>
-        <div class="stats-inputs">
-            ${[0,1,2,3].map(s => `
-                <div class="set-box">
-                    <label>S${s+1}</label>
-                    <input type="number" class="p-teli${s}" placeholder="Teli" value="${teli[s] || ''}" oninput="sendData()">
-                    <input type="number" class="p-tarol${s}" placeholder="Tar" value="${tarol[s] || ''}" oninput="sendData()">
-                    <input type="number" class="p-ures${s}" placeholder="Üres" value="${ures[s] || ''}" oninput="sendData()">
-                </div>
-            `).join('')}
-        </div>
-    `;
-    
-    // Az új játékos kártya mindig a lista tetejére kerül be (insertBefore)
-    if (container.firstChild) {
-        container.insertBefore(card, container.firstChild);
-    } else {
-        container.appendChild(card);
-    }
-}
-
-function addPlayer() {
-    const cards = document.querySelectorAll('.card');
-    if (cards.length >= 200) { alert("Elérted a maximum 200 főt!"); return; }
-    
-    // Kiszámoljuk a következő legmagasabb sorszámot az eddigi kártyák száma alapján + 1
-    const nextNumber = cards.length + 1;
-    
-    addPlayerCardUI(nextNumber, {});
-    sendData();
-}
-
-function removeLastPlayer() {
-    const container = document.getElementById('playersContainer');
-    if (container.children.length <= 1) { alert("Legalább 1 játékosnak maradnia kell!"); return; }
-    
-    // Mivel a legújabb a tetején van, a "legutolsó" játékos a DOM szerinti legalsó kártya lesz
-    container.removeChild(container.lastChild);
-    sendData();
-}
-
-function sendData() {
-    const title = document.getElementById('tournamentTitle').value;
-    const players = [];
-    const cards = document.querySelectorAll('.card');
-
-    cards.forEach((card) => {
-        // A kártyához rögzített fix sorszámot olvassuk ki
-        const playerNumber = parseInt(card.dataset.playerNumber) || 1;
-        const name = card.querySelector('.p-name').value;
-        const team = card.querySelector('.p-team').value;
-        let totalTeli = 0, totalTarol = 0, totalUres = 0;
-        const sets = [];
-        const teli_arr = [], tarol_arr = [], ures_arr = [];
-
-        for (let s = 0; s < 4; s++) {
-            const t = parseInt(card.querySelector(`.p-teli${s}`).value) || 0;
-            const tr = parseInt(card.querySelector(`.p-tarol${s}`).value) || 0;
-            const u = parseInt(card.querySelector(`.p-ures${s}`).value) || 0;
-
-            teli_arr.push(t); tarol_arr.push(tr); ures_arr.push(u);
-            totalTeli += t; totalTarol += tr; totalUres += u;
-            sets.push(t + tr);
-        }
-
-        players.push({
-            id: playerNumber, name: name || `Játékos ${playerNumber}`, team: team || '-',
-            sets: sets, teli: totalTeli, tarol: totalTarol, ures: totalUres,
-            total: totalTeli + totalTarol,
-            teli_arr: teli_arr, tarol_arr: tarol_arr, ures_arr: ures_arr
-        });
-    });
-
-    // Az adatokat sorszám szerint növekvő sorrendbe rendezzük mentés előtt, 
-    // hogy a külső nézetben/adatbázisban szépen sorban legyenek (1, 2, 3...)
-    players.sort((a, b) => a.id - b.id);
-
-    const currentCatObj = categories.find(c => c.id === activeCatId);
-    if (currentCatObj && title) {
-        currentCatObj.name = title.replace('Karácsony kupa 2027. - ', '');
-        renderCategoryTabs();
-    }
-
-    categoriesData[activeCatId] = { title: title, players: players };
-
-    // Mentés böngészőbe
-    saveToLocalStorage();
-
-    // Mentés Firebase-be
-    db.ref('karikupa_egyeni').set({
-        categories: categories,
-        data: categoriesData
-    });
-}
-</script>
-</body>
-</html>
